@@ -1,0 +1,261 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isBootstrappedAdmin() {
+      return isVerifiedUser() && request.auth.token.email == 'henrywalker82009@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin() || (isVerifiedUser() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidArticle(data) {
+      return data.keys().hasAll([
+          'ownerId', 'slug', 'title', 'categorySlug', 'authorName',
+          'featuredImage', 'featuredImageAlt', 'bodyMarkdown',
+          'status', 'isFeatured', 'publishedAtIso', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'slug', 'title', 'subtitle', 'categorySlug', 'tags',
+          'authorName', 'authorRole', 'featuredImage', 'featuredImageAlt',
+          'bodyMarkdown', 'references', 'status', 'isFeatured',
+          'publishedAtIso', 'seoTitle', 'seoDescription', 'canonicalUrl',
+          'createdAt', 'updatedAt'
+        ])
+        && data.ownerId is string && data.ownerId == request.auth.uid
+        && data.slug is string && data.slug.size() >= 2 && data.slug.size() <= 140 && data.slug.matches('^[a-z0-9\\-]+$')
+        && data.title is string && data.title.size() >= 3 && data.title.size() <= 180
+        && (!('subtitle' in data) || (data.subtitle is string && data.subtitle.size() <= 280))
+        && data.categorySlug is string && data.categorySlug.size() >= 2 && data.categorySlug.size() <= 64
+        && (!('tags' in data) || (data.tags is list && data.tags.size() <= 12 && (data.tags.size() == 0 || data.tags[0] is string)))
+        && data.authorName is string && data.authorName.size() >= 1 && data.authorName.size() <= 80
+        && (!('authorRole' in data) || (data.authorRole is string && data.authorRole.size() <= 80))
+        && data.featuredImage is string && data.featuredImage.size() >= 1 && data.featuredImage.size() <= 400
+        && data.featuredImageAlt is string && data.featuredImageAlt.size() >= 1 && data.featuredImageAlt.size() <= 200
+        && data.bodyMarkdown is string && data.bodyMarkdown.size() >= 10 && data.bodyMarkdown.size() <= 40000
+        && (!('references' in data) || (data.references is list && data.references.size() <= 12 && (data.references.size() == 0 || data.references[0] is string)))
+        && data.status in ['draft', 'scheduled', 'published']
+        && data.isFeatured is bool
+        && data.publishedAtIso is string && data.publishedAtIso.size() >= 8 && data.publishedAtIso.size() <= 40
+        && (!('seoTitle' in data) || (data.seoTitle is string && data.seoTitle.size() <= 160))
+        && (!('seoDescription' in data) || (data.seoDescription is string && data.seoDescription.size() <= 320))
+        && (!('canonicalUrl' in data) || (data.canonicalUrl is string && data.canonicalUrl.size() <= 300))
+        && data.updatedAt == request.time;
+    }
+
+    function isValidSiteSettings(data) {
+      return data.keys().hasAll(['ownerId', 'siteTitle', 'siteDescription', 'robotsTxt', 'allowIndexing', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'siteTitle', 'siteDescription', 'robotsTxt', 'allowIndexing', 'updatedAt'])
+        && data.ownerId is string && data.ownerId == request.auth.uid
+        && data.siteTitle is string && data.siteTitle.size() >= 2 && data.siteTitle.size() <= 120
+        && data.siteDescription is string && data.siteDescription.size() >= 2 && data.siteDescription.size() <= 300
+        && data.robotsTxt is string && data.robotsTxt.size() >= 2 && data.robotsTxt.size() <= 2000
+        && data.allowIndexing is bool
+        && data.updatedAt == request.time;
+    }
+
+    function isValidCmsGroup(data) {
+      return data.keys().hasAll(['ownerId', 'name', 'fandomName', 'agency', 'debutDate', 'generation', 'memberCount', 'summary', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'name', 'koreanName', 'fandomName', 'agency', 'debutDate', 'generation', 'memberCount', 'summary', 'updatedAt'])
+        && data.ownerId is string && data.ownerId == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 80
+        && (!('koreanName' in data) || (data.koreanName is string && data.koreanName.size() <= 80))
+        && data.fandomName is string && data.fandomName.size() >= 1 && data.fandomName.size() <= 60
+        && data.agency is string && data.agency.size() >= 1 && data.agency.size() <= 80
+        && data.debutDate is string && data.debutDate.size() == 10
+        && data.generation is string && data.generation.size() >= 2 && data.generation.size() <= 20
+        && data.memberCount is int && data.memberCount >= 1 && data.memberCount <= 40
+        && data.summary is string && data.summary.size() >= 5 && data.summary.size() <= 500
+        && data.updatedAt == request.time;
+    }
+
+    function isValidCmsIdol(data) {
+      return data.keys().hasAll(['ownerId', 'stageName', 'fullName', 'groupId', 'groupName', 'birthday', 'nationality', 'funFact', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'stageName', 'fullName', 'groupId', 'groupName', 'birthday', 'nationality', 'funFact', 'updatedAt'])
+        && data.ownerId is string && data.ownerId == request.auth.uid
+        && data.stageName is string && data.stageName.size() >= 1 && data.stageName.size() <= 60
+        && data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 100
+        && data.groupId is string && data.groupId.size() >= 1 && data.groupId.size() <= 64
+        && data.groupName is string && data.groupName.size() >= 1 && data.groupName.size() <= 80
+        && data.birthday is string && data.birthday.size() == 10
+        && data.nationality is string && data.nationality.size() >= 1 && data.nationality.size() <= 60
+        && data.funFact is string && data.funFact.size() >= 5 && data.funFact.size() <= 500
+        && data.updatedAt == request.time;
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['ownerId', 'displayName', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'displayName', 'favoriteGroup', 'biasIdol', 'updatedAt'])
+        && data.ownerId is string && data.ownerId == userId && data.ownerId == request.auth.uid
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 80
+        && (!('favoriteGroup' in data) || (data.favoriteGroup is string && data.favoriteGroup.size() <= 80))
+        && (!('biasIdol' in data) || (data.biasIdol is string && data.biasIdol.size() <= 80))
+        && data.updatedAt == request.time;
+    }
+
+    function isValidFavoriteItem(data, userId) {
+      return data.keys().hasAll(['ownerId', 'itemType', 'targetId', 'label', 'createdAt'])
+        && data.keys().hasOnly(['ownerId', 'itemType', 'targetId', 'label', 'createdAt'])
+        && data.ownerId is string && data.ownerId == userId && data.ownerId == request.auth.uid
+        && data.itemType in ['idol', 'group', 'article']
+        && data.targetId is string && data.targetId.size() >= 1 && data.targetId.size() <= 140
+        && data.label is string && data.label.size() >= 1 && data.label.size() <= 160
+        && data.createdAt == request.time;
+    }
+
+    function isValidQuizResult(data, userId) {
+      return data.keys().hasAll(['ownerId', 'quizSlug', 'quizTitle', 'archetypeTitle', 'summary', 'score', 'maxScore', 'createdAt'])
+        && data.keys().hasOnly(['ownerId', 'quizSlug', 'quizTitle', 'archetypeTitle', 'summary', 'score', 'maxScore', 'createdAt'])
+        && data.ownerId is string && data.ownerId == userId && data.ownerId == request.auth.uid
+        && data.quizSlug is string && data.quizSlug.size() >= 1 && data.quizSlug.size() <= 64 && data.quizSlug.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.quizTitle is string && data.quizTitle.size() >= 1 && data.quizTitle.size() <= 120
+        && data.archetypeTitle is string && data.archetypeTitle.size() >= 1 && data.archetypeTitle.size() <= 120
+        && data.summary is string && data.summary.size() >= 1 && data.summary.size() <= 400
+        && data.score is int && data.score >= 0 && data.score <= 10000
+        && data.maxScore is int && data.maxScore >= 1 && data.maxScore <= 10000
+        && data.createdAt == request.time;
+    }
+
+    function isValidFanEvent(data, userId) {
+      return data.keys().hasAll(['ownerId', 'title', 'groupName', 'eventType', 'dateIso', 'kstTime', 'createdAt'])
+        && data.keys().hasOnly(['ownerId', 'title', 'groupName', 'eventType', 'dateIso', 'kstTime', 'sourceNote', 'createdAt'])
+        && data.ownerId is string && data.ownerId == userId && data.ownerId == request.auth.uid
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 120
+        && data.groupName is string && data.groupName.size() >= 1 && data.groupName.size() <= 80
+        && data.eventType in ['comeback', 'concert', 'anniversary', 'custom']
+        && data.dateIso is string && data.dateIso.size() >= 8 && data.dateIso.size() <= 32
+        && data.kstTime is string && data.kstTime.size() >= 4 && data.kstTime.size() <= 16
+        && (!('sourceNote' in data) || (data.sourceNote is string && data.sourceNote.size() <= 160))
+        && data.createdAt == request.time;
+    }
+
+    function isValidPhotocardItem(data, userId) {
+      return data.keys().hasAll(['ownerId', 'idolId', 'idolName', 'groupName', 'albumEra', 'cardTitle', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'idolId', 'idolName', 'groupName', 'albumEra', 'cardTitle', 'status', 'notes', 'createdAt', 'updatedAt'])
+        && data.ownerId is string && data.ownerId == userId && data.ownerId == request.auth.uid
+        && data.idolId is string && data.idolId.size() >= 1 && data.idolId.size() <= 64
+        && data.idolName is string && data.idolName.size() >= 1 && data.idolName.size() <= 80
+        && data.groupName is string && data.groupName.size() >= 1 && data.groupName.size() <= 80
+        && data.albumEra is string && data.albumEra.size() >= 1 && data.albumEra.size() <= 120
+        && data.cardTitle is string && data.cardTitle.size() >= 1 && data.cardTitle.size() <= 120
+        && data.status in ['owned', 'wishlist']
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 240))
+        && data.updatedAt == request.time;
+    }
+
+    // Editorial CMS Articles (publicly readable only if published; full control for bootstrapped/listed admins)
+    match /articles/{articleId} {
+      allow get: if isValidId(articleId) && (existing().status == 'published' || isAdmin());
+      allow list: if resource.data.status == 'published' || isBootstrappedAdmin();
+      allow create: if isValidId(articleId) && isAdmin()
+        && isValidArticle(incoming())
+        && incoming().createdAt == request.time;
+      allow update: if isValidId(articleId) && isAdmin()
+        && isValidArticle(incoming())
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'slug', 'title', 'subtitle', 'categorySlug', 'tags',
+          'authorName', 'authorRole', 'featuredImage', 'featuredImageAlt',
+          'bodyMarkdown', 'references', 'status', 'isFeatured',
+          'publishedAtIso', 'seoTitle', 'seoDescription', 'canonicalUrl', 'updatedAt'
+        ]);
+      allow delete: if isValidId(articleId) && isAdmin();
+    }
+
+    match /siteSettings/{settingId} {
+      allow get: if isValidId(settingId);
+      allow create, update: if isValidId(settingId) && isAdmin() && isValidSiteSettings(incoming());
+      allow delete: if isValidId(settingId) && isAdmin();
+    }
+
+    match /cmsGroups/{groupId} {
+      allow get: if isValidId(groupId);
+      allow list: if true;
+      allow create, update: if isValidId(groupId) && isAdmin() && isValidCmsGroup(incoming());
+      allow delete: if isValidId(groupId) && isAdmin();
+    }
+
+    match /cmsIdols/{idolId} {
+      allow get: if isValidId(idolId);
+      allow list: if true;
+      allow create, update: if isValidId(idolId) && isAdmin() && isValidCmsIdol(incoming());
+      allow delete: if isValidId(idolId) && isAdmin();
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow create: if isValidId(userId) && isVerifiedUser() && isOwner(userId) && isValidUserProfile(incoming(), userId);
+      allow update: if isValidId(userId) && isVerifiedUser() && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().ownerId == existing().ownerId
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'favoriteGroup', 'biasIdol', 'updatedAt']);
+      allow delete: if isValidId(userId) && isVerifiedUser() && isOwner(userId);
+
+      match /favorites/{favId} {
+        allow get: if isValidId(userId) && isValidId(favId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(favId) && isVerifiedUser() && isOwner(userId) && isValidFavoriteItem(incoming(), userId);
+        allow delete: if isValidId(userId) && isValidId(favId) && isVerifiedUser() && isOwner(userId);
+      }
+
+      match /results/{resultId} {
+        allow get: if isValidId(userId) && isValidId(resultId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(resultId) && isVerifiedUser() && isOwner(userId) && isValidQuizResult(incoming(), userId);
+        allow delete: if isValidId(userId) && isValidId(resultId) && isVerifiedUser() && isOwner(userId);
+      }
+
+      match /events/{eventId} {
+        allow get: if isValidId(userId) && isValidId(eventId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(eventId) && isVerifiedUser() && isOwner(userId) && isValidFanEvent(incoming(), userId);
+        allow delete: if isValidId(userId) && isValidId(eventId) && isVerifiedUser() && isOwner(userId);
+      }
+
+      match /collections/{itemId} {
+        allow get: if isValidId(userId) && isValidId(itemId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(itemId) && isVerifiedUser() && isOwner(userId)
+          && isValidPhotocardItem(incoming(), userId)
+          && incoming().createdAt == request.time;
+        allow update: if isValidId(userId) && isValidId(itemId) && isVerifiedUser() && isOwner(userId)
+          && isValidPhotocardItem(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'notes', 'albumEra', 'cardTitle', 'updatedAt']);
+        allow delete: if isValidId(userId) && isValidId(itemId) && isVerifiedUser() && isOwner(userId);
+      }
+    }
+  }
+}

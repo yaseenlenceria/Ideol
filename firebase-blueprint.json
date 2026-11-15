@@ -1,0 +1,209 @@
+{
+  "entities": {
+    "Article": {
+      "title": "Article",
+      "description": "Editorial K-pop news, guide, or profile article managed in Admin CMS",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "slug": { "type": "string", "maxLength": 140, "pattern": "^[a-z0-9\\-]+$" },
+        "title": { "type": "string", "maxLength": 180 },
+        "subtitle": { "type": "string", "maxLength": 280 },
+        "categorySlug": { "type": "string", "maxLength": 64 },
+        "tags": { "type": "array" },
+        "authorName": { "type": "string", "maxLength": 80 },
+        "authorRole": { "type": "string", "maxLength": 80 },
+        "featuredImage": { "type": "string", "maxLength": 400 },
+        "featuredImageAlt": { "type": "string", "maxLength": 200 },
+        "bodyMarkdown": { "type": "string", "maxLength": 40000 },
+        "references": { "type": "array" },
+        "status": { "type": "string", "enum": ["draft", "scheduled", "published"] },
+        "isFeatured": { "type": "boolean" },
+        "publishedAtIso": { "type": "string", "maxLength": 40 },
+        "seoTitle": { "type": "string", "maxLength": 160 },
+        "seoDescription": { "type": "string", "maxLength": 320 },
+        "canonicalUrl": { "type": "string", "maxLength": 300 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerId",
+        "slug",
+        "title",
+        "categorySlug",
+        "authorName",
+        "featuredImage",
+        "featuredImageAlt",
+        "bodyMarkdown",
+        "status",
+        "isFeatured",
+        "publishedAtIso",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Global SEO, sitemap, and robots.txt preferences",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "siteTitle": { "type": "string", "maxLength": 120 },
+        "siteDescription": { "type": "string", "maxLength": 300 },
+        "robotsTxt": { "type": "string", "maxLength": 2000 },
+        "allowIndexing": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "siteTitle", "siteDescription", "robotsTxt", "allowIndexing", "updatedAt"]
+    },
+    "CmsGroup": {
+      "title": "CmsGroup",
+      "description": "Admin-managed K-pop group directory entry",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 80 },
+        "koreanName": { "type": "string", "maxLength": 80 },
+        "fandomName": { "type": "string", "maxLength": 60 },
+        "agency": { "type": "string", "maxLength": 80 },
+        "debutDate": { "type": "string", "maxLength": 10 },
+        "generation": { "type": "string", "maxLength": 20 },
+        "memberCount": { "type": "integer" },
+        "summary": { "type": "string", "maxLength": 500 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "name", "fandomName", "agency", "debutDate", "generation", "memberCount", "summary", "updatedAt"]
+    },
+    "CmsIdol": {
+      "title": "CmsIdol",
+      "description": "Admin-managed K-pop idol directory entry",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "stageName": { "type": "string", "maxLength": 60 },
+        "fullName": { "type": "string", "maxLength": 100 },
+        "groupId": { "type": "string", "maxLength": 64 },
+        "groupName": { "type": "string", "maxLength": 80 },
+        "birthday": { "type": "string", "maxLength": 10 },
+        "nationality": { "type": "string", "maxLength": 60 },
+        "funFact": { "type": "string", "maxLength": 500 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "stageName", "fullName", "groupId", "groupName", "birthday", "nationality", "funFact", "updatedAt"]
+    },
+    "FavoriteItem": {
+      "title": "FavoriteItem",
+      "description": "User favorite idol, group, or bookmarked article",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "itemType": { "type": "string", "enum": ["idol", "group", "article"] },
+        "targetId": { "type": "string", "maxLength": 140 },
+        "label": { "type": "string", "maxLength": 160 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "itemType", "targetId", "label", "createdAt"]
+    },
+    "QuizResult": {
+      "title": "QuizResult",
+      "description": "Completed quiz result saved by an authenticated fan",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "quizSlug": { "type": "string", "maxLength": 64 },
+        "quizTitle": { "type": "string", "maxLength": 120 },
+        "archetypeTitle": { "type": "string", "maxLength": 120 },
+        "summary": { "type": "string", "maxLength": 400 },
+        "score": { "type": "integer" },
+        "maxScore": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "quizSlug", "quizTitle", "archetypeTitle", "summary", "score", "maxScore", "createdAt"]
+    },
+    "FanEvent": {
+      "title": "FanEvent",
+      "description": "User-tracked comeback or KST event countdown",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 120 },
+        "groupName": { "type": "string", "maxLength": 80 },
+        "eventType": { "type": "string", "enum": ["comeback", "concert", "anniversary", "custom"] },
+        "dateIso": { "type": "string", "maxLength": 32 },
+        "kstTime": { "type": "string", "maxLength": 16 },
+        "sourceNote": { "type": "string", "maxLength": 160 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "title", "groupName", "eventType", "dateIso", "kstTime", "createdAt"]
+    },
+    "PhotocardItem": {
+      "title": "PhotocardItem",
+      "description": "Fan photocard binder item",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "idolId": { "type": "string", "maxLength": 64 },
+        "idolName": { "type": "string", "maxLength": 80 },
+        "groupName": { "type": "string", "maxLength": 80 },
+        "albumEra": { "type": "string", "maxLength": 120 },
+        "cardTitle": { "type": "string", "maxLength": 120 },
+        "status": { "type": "string", "enum": ["owned", "wishlist"] },
+        "notes": { "type": "string", "maxLength": 240 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "idolId", "idolName", "groupName", "albumEra", "cardTitle", "status", "createdAt", "updatedAt"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Private fan profile preferences",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "displayName": { "type": "string", "maxLength": 80 },
+        "favoriteGroup": { "type": "string", "maxLength": 80 },
+        "biasIdol": { "type": "string", "maxLength": 80 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "displayName", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/articles/{articleId}": {
+      "schema": { "$ref": "#/entities/Article" },
+      "description": "Published editorial articles (readable by all) and drafts/scheduled (admin only)"
+    },
+    "/siteSettings/{settingId}": {
+      "schema": { "$ref": "#/entities/SiteSettings" },
+      "description": "Global SEO and robots.txt settings"
+    },
+    "/cmsGroups/{groupId}": {
+      "schema": { "$ref": "#/entities/CmsGroup" },
+      "description": "Admin-managed group directory entries"
+    },
+    "/cmsIdols/{idolId}": {
+      "schema": { "$ref": "#/entities/CmsIdol" },
+      "description": "Admin-managed idol directory entries"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile strictly owned by userId"
+    },
+    "/users/{userId}/favorites/{favId}": {
+      "schema": { "$ref": "#/entities/FavoriteItem" },
+      "description": "Favorite idols, groups, and bookmarked articles owned by userId"
+    },
+    "/users/{userId}/results/{resultId}": {
+      "schema": { "$ref": "#/entities/QuizResult" },
+      "description": "Completed quiz results owned by userId"
+    },
+    "/users/{userId}/events/{eventId}": {
+      "schema": { "$ref": "#/entities/FanEvent" },
+      "description": "Custom tracked events owned by userId"
+    },
+    "/users/{userId}/collections/{itemId}": {
+      "schema": { "$ref": "#/entities/PhotocardItem" },
+      "description": "Photocard tracker items owned by userId"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>/groups</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>/idols</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>/fan-lab</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>/category/news</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>/category/profiles</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>/category/guides</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>/category/comebacks</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>/category/concerts</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>/category/explainers</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>/category/quizzes-tools</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+</urlset>

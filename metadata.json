@@ -1,0 +1,6 @@
+{
+  "name": "IdolOrbit",
+  "description": "Independent mobile-first K-pop news, editorial blog, group & idol directory, Admin CMS, and interactive Fan Lab covering BTS, BLACKPINK, BABYMONSTER, IVE, Stray Kids, TWICE, SEVENTEEN, ENHYPEN, TXT, aespa, LE SSERAFIM, ATEEZ, ILLIT, and KATSEYE.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
